@@ -3,26 +3,46 @@ from pytz import timezone
 import datetime
 
 
-def load_attempts():
-    pages = requests.get(
-        "https://devman.org/api/challenges/solution_attempts/?page=1").json()["number_of_pages"]
+def load_attempts(pages):
     for page in range(1, pages):
-        page_content = requests.get("https://devman.org/api/challenges/solution_attempts/?page={}".format(page))
-        for attempt in page_content.json()["records"]:
+        page_content = fetch_page_data(
+            "https://devman.org/api/challenges/"
+            "solution_attempts/?page={}".format(page)
+        )["records"]
+        for attempt in page_content:
             yield attempt
 
 
+def fetch_page_data(url):
+    page_data = requests.get(url).json()
+    return page_data
+
+
 def get_midnighters(attempt):
-    attempt_date = datetime.datetime.fromtimestamp(attempt["timestamp"])  # .strftime('%Y-%m-%d %H:%M:%S')
+    attempt_date = datetime.datetime.fromtimestamp(attempt["timestamp"])
     user_timezone = timezone(attempt["timezone"])
     local_time_attempt = user_timezone.localize(attempt_date)
     attempt_time = datetime.datetime.time(local_time_attempt)
     midhight = datetime.datetime.min.time()
     morning = datetime.time(6, 0, 0)
-    if midhight < attempt_time < morning:
-        print("{} - {}".format(attempt["username"], attempt_time))
+    if morning > attempt_time > midhight:
+        return attempt["username"]
+
+
+def print_midnighters(midnighters):
+    print("These are users with red eyes:")
+    for midnighter in midnighters:
+        print(midnighter)
 
 
 if __name__ == "__main__":
-    for attempt in load_attempts():
-        get_midnighters(attempt)
+    midnighters = set()
+    pages_number = fetch_page_data(
+        "https://devman.org/api/challenges/solution_attempts/?page=1"
+    )["number_of_pages"]
+    for attempt in load_attempts(pages_number):
+        midnighter = get_midnighters(attempt)
+        if midnighter is not None:
+            midnighters.add(midnighter)
+    print_midnighters(midnighters)
+
