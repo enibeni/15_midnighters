@@ -38,7 +38,8 @@ def print_midnighters(midnighters):
 if __name__ == "__main__":
     midnighters = set()
     pages_number = fetch_page_data(
-        "https://devman.org/api/challenges/solution_attempts/?page=1"
+        "https://devman.org/api/challenges/solution_attempts/",
+        page=1
     )["number_of_pages"]
     for attempt in load_attempts(pages_number):
         midnighter = get_midnighters(attempt)
