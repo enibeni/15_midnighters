@@ -3,29 +3,36 @@ from pytz import timezone
 import datetime
 
 
-def load_attempts(pages):
-    for page in range(1, pages):
+def load_attempts():
+    page = 1
+    while True:
         attempts = fetch_page_data(
             "https://devman.org/api/challenges/solution_attempts/",
             page=page
-        )["records"]
-        for attempt in attempts:
-            yield attempt
+        )
+        page += 1
+        if attempts:
+            for attempt in attempts["records"]:
+                yield attempt
+        else:
+            break
 
 
 def fetch_page_data(url, **kwargs):
-    page_data = requests.get(url, params=kwargs).json()
-    return page_data
+    page_data = requests.get(url, params=kwargs)
+    if page_data.ok:
+        return page_data.json()
 
 
-def get_midnighters(attempt):
-    attempt_date = datetime.datetime.fromtimestamp(attempt["timestamp"])
+def get_midnighter(attempt):
     user_timezone = timezone(attempt["timezone"])
-    local_time_attempt = user_timezone.localize(attempt_date)
-    attempt_time = datetime.datetime.time(local_time_attempt)
-    midhight = datetime.datetime.min.time()
-    morning = datetime.time(6, 0, 0)
-    if morning > attempt_time > midhight:
+    attempt_date = datetime.datetime.fromtimestamp(
+        attempt["timestamp"],
+        tz=user_timezone
+    )
+    midnight_hour = 0
+    morning_hour = 6
+    if morning_hour > attempt_date.hour > midnight_hour:
         return attempt["username"]
 
 
@@ -37,13 +44,9 @@ def print_midnighters(midnighters):
 
 if __name__ == "__main__":
     midnighters = set()
-    pages_number = fetch_page_data(
-        "https://devman.org/api/challenges/solution_attempts/",
-        page=1
-    )["number_of_pages"]
-    for attempt in load_attempts(pages_number):
-        midnighter = get_midnighters(attempt)
-        if midnighter is not None:
+    for attempt in load_attempts():
+        midnighter = get_midnighter(attempt)
+        if midnighter:
             midnighters.add(midnighter)
     print_midnighters(midnighters)
 
