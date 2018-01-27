@@ -5,16 +5,16 @@ import datetime
 
 def load_attempts(pages):
     for page in range(1, pages):
-        page_content = fetch_page_data(
-            "https://devman.org/api/challenges/"
-            "solution_attempts/?page={}".format(page)
+        attempts = fetch_page_data(
+            "https://devman.org/api/challenges/solution_attempts/",
+            page=page
         )["records"]
-        for attempt in page_content:
+        for attempt in attempts:
             yield attempt
 
 
-def fetch_page_data(url):
-    page_data = requests.get(url).json()
+def fetch_page_data(url, **kwargs):
+    page_data = requests.get(url, params=kwargs).json()
     return page_data
 
 
