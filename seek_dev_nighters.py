@@ -6,13 +6,13 @@ import datetime
 def load_attempts():
     page = 1
     while True:
-        attempts = fetch_page_data(
+        page_data = fetch_page_data(
             "https://devman.org/api/challenges/solution_attempts/",
             page=page
         )
         page += 1
-        if attempts:
-            for attempt in attempts["records"]:
+        if page_data:
+            for attempt in page_data["records"]:
                 yield attempt
         else:
             break
